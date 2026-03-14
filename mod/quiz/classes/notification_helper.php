@@ -71,8 +71,14 @@ class notification_helper {
      * @return array The users after all filtering has been applied.
      */
     public static function get_users_within_quiz(int $quizid): array {
-        // Get quiz data.
-        $quizobj = quiz_settings::create($quizid);
+        try {
+            // Get quiz data.
+            $quizobj = quiz_settings::create($quizid);
+        } catch (\dml_missing_record_exception) {
+            // The queued task may execute after the quiz has been deleted.
+            mtrace("No users queued as the quiz $quizid can no longer be found in the database.");
+            return [];
+        }
         $quiz = $quizobj->get_quiz();
 
         // Get our users.
@@ -147,8 +153,15 @@ class notification_helper {
             return;
         }
 
-        // Get quiz data.
-        $quizobj = quiz_settings::create($user->quizid);
+        try {
+            // Get quiz data.
+            $quizobj = quiz_settings::create($user->quizid);
+        } catch (\dml_missing_record_exception) {
+            // The notification task may execute after the quiz has been deleted.
+            mtrace("No notification sent as the quiz {$user->quizid} can no longer be found in the database.");
+            return;
+        }
+
         $quiz = $quizobj->get_quiz();
         $url = $quizobj->view_url();
 
