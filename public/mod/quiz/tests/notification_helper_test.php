@@ -365,4 +365,98 @@ final class notification_helper_test extends \advanced_testcase {
         // Clear sink.
         $sink->clear();
     }
+
+    /**
+     * Test that queuing notifications is ignored if the quiz has been deleted before the ad-hoc task runs.
+     */
+    public function test_queue_notification_tasks_for_users_with_deleted_quiz(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $generator = $this->getDataGenerator();
+        $clock = $this->mock_clock_with_frozen();
+        $sink = $this->redirectMessages();
+
+        $course = $generator->create_course();
+        $user = $generator->create_user();
+        $generator->enrol_user($user->id, $course->id, 'student');
+
+        /** @var \mod_quiz_generator $quizgenerator */
+        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
+        $quiz = $quizgenerator->create_instance([
+            'course' => $course->id,
+            'timeopen' => $clock->time() + DAYSECS,
+        ]);
+        $clock->bump(5);
+
+        $task = \core\task\manager::get_scheduled_task(\mod_quiz\task\queue_all_quiz_open_notification_tasks::class);
+        $task->execute();
+
+        $adhoctask = \core\task\manager::get_next_adhoc_task($clock->time());
+        $this->assertInstanceOf(\mod_quiz\task\queue_quiz_open_notification_tasks_for_users::class, $adhoctask);
+
+        quiz_delete_instance($quiz->id);
+
+        ob_start();
+        $adhoctask->execute();
+        $output = ob_get_clean();
+
+        \core\task\manager::adhoc_task_complete($adhoctask);
+
+        $this->assertNull(\core\task\manager::get_next_adhoc_task($clock->time()));
+        $this->assertEmpty($sink->get_messages_by_component('mod_quiz'));
+        $this->assertStringContainsString(
+            needle: "No users queued as the quiz $quiz->id can no longer be found in the database.",
+            haystack: $output,
+        );
+    }
+
+    /**
+     * Test that queued notifications are ignored if the quiz has been deleted before the send ad-hoc task runs.
+     */
+    public function test_send_notification_to_user_with_deleted_quiz(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $generator = $this->getDataGenerator();
+        $clock = $this->mock_clock_with_frozen();
+        $sink = $this->redirectMessages();
+
+        $course = $generator->create_course();
+        $user = $generator->create_user();
+        $generator->enrol_user($user->id, $course->id, 'student');
+
+        /** @var \mod_quiz_generator $quizgenerator */
+        $quizgenerator = $generator->get_plugin_generator('mod_quiz');
+        $quiz = $quizgenerator->create_instance([
+            'course' => $course->id,
+            'timeopen' => $clock->time() + DAYSECS,
+        ]);
+        $clock->bump(5);
+
+        $task = \core\task\manager::get_scheduled_task(\mod_quiz\task\queue_all_quiz_open_notification_tasks::class);
+        $task->execute();
+
+        $adhoctask = \core\task\manager::get_next_adhoc_task($clock->time());
+        $this->assertInstanceOf(\mod_quiz\task\queue_quiz_open_notification_tasks_for_users::class, $adhoctask);
+        $adhoctask->execute();
+        \core\task\manager::adhoc_task_complete($adhoctask);
+
+        $adhoctask = \core\task\manager::get_next_adhoc_task($clock->time());
+        $this->assertInstanceOf(\mod_quiz\task\send_quiz_open_soon_notification_to_user::class, $adhoctask);
+
+        quiz_delete_instance($quiz->id);
+
+        ob_start();
+        $adhoctask->execute();
+        $output = ob_get_clean();
+        \core\task\manager::adhoc_task_complete($adhoctask);
+
+        $this->assertNull(\core\task\manager::get_next_adhoc_task($clock->time()));
+        $this->assertEmpty($sink->get_messages_by_component('mod_quiz'));
+        $this->assertStringContainsString(
+            needle: "No notification sent as the quiz $quiz->id can no longer be found in the database.",
+            haystack: $output,
+        );
+    }
 }
