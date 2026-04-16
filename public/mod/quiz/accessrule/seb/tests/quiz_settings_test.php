@@ -156,7 +156,8 @@ final class quiz_settings_test extends \advanced_testcase {
 
         $quizsettings = new seb_quiz_settings(0, $settings);
         $configkey = $quizsettings->get_config_key();
-        $this->assertEquals("016f5b5cd81db1000a9c748038591bd1183a5ce3ceccbd2da99cad047c2b58b5",
+        $this->assertEquals(
+            "016f5b5cd81db1000a9c748038591bd1183a5ce3ceccbd2da99cad047c2b58b5",
             $configkey
         );
     }
@@ -169,13 +170,17 @@ final class quiz_settings_test extends \advanced_testcase {
 
         $quizsettings = new seb_quiz_settings(0, $settings);
         $configkey = $quizsettings->get_config_key();
-        $this->assertEquals("016f5b5cd81db1000a9c748038591bd1183a5ce3ceccbd2da99cad047c2b58b5",
-                $configkey);
+        $this->assertEquals(
+            "016f5b5cd81db1000a9c748038591bd1183a5ce3ceccbd2da99cad047c2b58b5",
+            $configkey
+        );
 
         $quizsettings->set('filterembeddedcontent', 1); // Alter the settings.
         $configkey = $quizsettings->get_config_key();
-        $this->assertEquals("eeb6b8b08d52be0dd16a40d3a2a6ae787fa55ceee5c5e4a57f97e6275d055a3f",
-            $configkey);
+        $this->assertEquals(
+            "eeb6b8b08d52be0dd16a40d3a2a6ae787fa55ceee5c5e4a57f97e6275d055a3f",
+            $configkey
+        );
     }
 
     /**
