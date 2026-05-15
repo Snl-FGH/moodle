@@ -60,6 +60,8 @@ Feature: Managers can manage categories for course custom fields
     And "Field2" "text" should appear after "Category2" "text"
     And "Category3" "text" should appear after "Field2" "text"
     And I press "Move \"Field1\""
+    And "To the top of category Category1" "link" should exist
+    And "//a[@data-core_sortable_list-quickmove and normalize-space(.) = '']" "xpath_element" should not exist
     And I follow "To the top of category Category2"
     And "Category2" "text" should appear after "Category1" "text"
     And "Field1" "text" should appear after "Category2" "text"
