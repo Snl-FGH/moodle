@@ -70,13 +70,7 @@ export const register = (editor) => {
         // Setup the Undo handler.
         editor.on('AddUndo', undoHandler);
 
-        if (editor.dom.isEmpty(editor.getBody())) {
-            Log.info(`Attempting to restore draft`, getLogSource(editor));
-            Storage.restoreDraft(editor);
-        } else {
-            // There was nothing to restore, so we can mark the editor as initialised.
-            Log.warn(`Skipping draft restoration. The editor is not empty.`, getLogSource(editor));
-            Options.markInitialised(editor);
-        }
+        Log.info(`Attempting to restore draft`, getLogSource(editor));
+        Storage.restoreDraft(editor);
     });
 };
