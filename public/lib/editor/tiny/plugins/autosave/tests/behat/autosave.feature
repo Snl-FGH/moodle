@@ -28,6 +28,19 @@ Feature: Tiny editor autosave
     Then the field "Description" matches value "This is my draft"
 
   @javascript
+  Scenario: Restore a draft when editing existing content
+    Given I log in as "teacher1"
+    And I open my profile in edit mode
+    And I set the field "Description" to "Existing content"
+    And I click on "Update profile" "button"
+    And I open my profile in edit mode
+    And I set the field "Description" to "This is my draft"
+    And I log out
+    When I log in as "teacher1"
+    And I open my profile in edit mode
+    Then the field "Description" matches value "This is my draft"
+
+  @javascript
   Scenario: Do not restore a draft if files have been modified
     Given the following "user private file" exists:
       | user     | teacher2                                                |
